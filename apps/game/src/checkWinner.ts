@@ -18,37 +18,34 @@ export function checkWinner(board: string[][], player: string): boolean {
   // Vertical
   for (let c = 0; c < COLS; c++) {
     for (let r = 0; r <= ROWS - 4; r++) {
-      const currentRow = board[r];
-      if (currentRow && currentRow[c] === player &&
-          currentRow[c] === player &&
-          currentRow[c] === player &&
-          currentRow[c] === player) {
+      if (board[r]?.[c] === player &&
+          board[r+1]?.[c] === player &&
+          board[r+2]?.[c] === player &&
+          board[r+3]?.[c] === player) {
         return true;
       }
     }
   }
 
-  // Diagonal right 
+  // Diagonal right (down-right)
   for (let r = 0; r <= ROWS - 4; r++) {
     for (let c = 0; c <= COLS - 4; c++) {
-      const currentRow = board[r];
-      if (currentRow && currentRow[c] === player &&
-          currentRow[c+1] === player &&
-          currentRow[c+2] === player &&
-          currentRow[c+3] === player) {
+      if (board[r]?.[c] === player &&
+          board[r+1]?.[c+1] === player &&
+          board[r+2]?.[c+2] === player &&
+          board[r+3]?.[c+3] === player) {
         return true;
       }
     }
   }
 
-  // Diagonal left
+  // Diagonal left (down-left)
   for (let r = 0; r <= ROWS - 4; r++) {
     for (let c = 3; c < COLS; c++) {
-      const currentRow = board[r];
-      if (currentRow && currentRow[c] === player &&
-          currentRow[c-1] === player &&
-          currentRow[c-2] === player &&
-          currentRow[c-3] === player) {
+      if (board[r]?.[c] === player &&
+          board[r+1]?.[c-1] === player &&
+          board[r+2]?.[c-2] === player &&
+          board[r+3]?.[c-3] === player) {
         return true;
       }
     }

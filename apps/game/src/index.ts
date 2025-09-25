@@ -28,7 +28,7 @@ async function playGame() {
 
     if (checkWinner(board, currentPlayer)) {
       printBoard(board);
-      console.log(`Player ${currentPlayer} wins! 🎉`);
+      console.log(`Player ${currentPlayer} wins!`);
       break;
     }
 
