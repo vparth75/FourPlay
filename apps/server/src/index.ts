@@ -1,62 +1,98 @@
 import { WebSocketServer, WebSocket } from "ws";
-import { makeMove, GameState, createBoard, printBoard} from "@repo/game";
+import { makeMove, GameState, createBoard, printBoard } from "@repo/game";
 
-const wss = new WebSocketServer({ port:8080 });
+const wss = new WebSocketServer({ port: 8080 });
+
+interface Room {
+  players: WebSocket[];
+  gameState: GameState;
+}
 
 const users = new Set<WebSocket>();
-let gameState: GameState = {
-  board: createBoard(),
-  currentPlayer: "X",
-  gameOver: false,
+const roomByPlayer = new Map<WebSocket, Room>();
+const queue: WebSocket[] = [];
+
+function handleMessage(sender: WebSocket, raw: string) {
+  try {
+    const room = roomByPlayer.get(sender);
+    if (!room) return;
+
+    const parsedMessage = JSON.parse(raw);
+    if (parsedMessage.type !== "move") return;
+
+    const column = Number(parsedMessage.column);
+    const newState = makeMove(room.gameState, column);
+
+    if (!newState.invalidMove) {
+      room.gameState = newState;
+      printBoard(room.gameState.board);
+    }
+
+    if (newState.winner) {
+      printBoard(newState.board);
+      console.log(`${newState.currentPlayer} won!`)
+    }
+
+    room.players.forEach(player =>
+      player.send(
+        JSON.stringify({
+          type: "move",
+          column,
+          gameState: room.gameState,
+        }),
+      ),
+    );
+  } catch (error) {
+    sender.send(
+      JSON.stringify({
+        type: "info",
+        message: "Could not process message",
+      }),
+    );
+  }
 }
 
 wss.on("connection", (socket: WebSocket) => {
   users.add(socket);
+  queue.unshift(socket);
 
-  printBoard(gameState.board);
-
-  socket.send(JSON.stringify({
-    type: "info",
-    message: "connected"
-  }));
-
-  socket.on("message", (message: string) => {
-    try{
-      const parsedMessage = JSON.parse(message);
-    
-      if (parsedMessage.type === "move"){
-        const column = Number(parsedMessage.column);
-        gameState.currentPlayer = parsedMessage.gameState.currentPlayer;
-
-        const newState = makeMove(gameState, column);
-
-        if(!newState.invalidMove){
-          gameState = newState;
-        }
-
-        if(newState.winner){
-          printBoard(gameState.board);
-          console.log(`${gameState.currentPlayer} won!`);
-        }
-
-        users.forEach(user => user.send(JSON.stringify({
-          type: "move",
-          column,
-          gameState
-        })));
-      }
-
-    } catch(e) {
-      console.log(`${e} \n`);
-
-      socket.send(JSON.stringify({
-        type: "info",
-        message: "Couldnt send message"
-      }))
-    }
-  })
+  socket.send(
+    JSON.stringify({
+      type: "info",
+      message: "connected",
+    }),
+  );
 
   socket.on("close", () => {
     users.delete(socket);
-  })
+    roomByPlayer.delete(socket);
+  });
+
+  if (queue.length < 2) return;
+
+  const p1 = queue.pop();
+  const p2 = queue.pop();
+  if (!p1 || !p2) return;
+
+  const room: Room = {
+    players: [p1, p2],
+    gameState: {
+      board: createBoard(),
+      currentPlayer: "X",
+      gameOver: false,
+    },
+  };
+
+  room.players.forEach(player => {
+    roomByPlayer.set(player, room);
+    player.send(
+      JSON.stringify({
+        type: "start",
+        gameState: room.gameState,
+      }),
+    );
+    player.on("message", message => handleMessage(player, message.toString()));
+  });
+
+  printBoard(room.gameState.board);
 });

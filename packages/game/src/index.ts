@@ -11,45 +11,44 @@ export interface GameState{
   invalidMove?: boolean;
 }
 
-export function makeMove(gameState: GameState, column: number): GameState{
-  
-  if (!gameState.gameOver){
-    const newBoard = dropCoin(gameState.board, column, gameState.currentPlayer);
-    if (!newBoard) return ({
-      board: gameState.board,
-      currentPlayer: gameState.currentPlayer,
-      gameOver: gameState.gameOver,
-      invalidMove: true
-    });
-
-    if(isDraw(newBoard)) return ({
-      board: newBoard,
-      currentPlayer: gameState.currentPlayer,
-      gameOver: true,
-      isDraw: true
-    });
-
-    if(checkWinner(newBoard, gameState.currentPlayer)) return ({
-      board: newBoard,
-      currentPlayer: gameState.currentPlayer,
-      gameOver: true,
-      winner: gameState.currentPlayer
-    })
-    
-    printBoard(newBoard);
-
-    return({
-      board: newBoard,
-      currentPlayer: gameState.currentPlayer,
-      gameOver: false
-    }) 
-  } else {
-    return ({
-      board: gameState.board,
-      currentPlayer: gameState.currentPlayer,
-      gameOver: true
-    })
+export function makeMove(gameState: GameState, column: number): GameState {
+  if (gameState.gameOver) {
+    return { ...gameState, invalidMove: true };
   }
+
+  const nextBoard = gameState.board.map(row => [...row]);
+  const updatedBoard = dropCoin(nextBoard, column, gameState.currentPlayer);
+
+  if (!updatedBoard) {
+    return { ...gameState, invalidMove: true };
+  }
+
+  if (checkWinner(updatedBoard, gameState.currentPlayer)) {
+    return {
+      board: updatedBoard,
+      currentPlayer: gameState.currentPlayer,
+      gameOver: true,
+      winner: gameState.currentPlayer,
+      invalidMove: false,
+    };
+  }
+
+  if (isDraw(updatedBoard)) {
+    return {
+      board: updatedBoard,
+      currentPlayer: gameState.currentPlayer,
+      gameOver: true,
+      isDraw: true,
+      invalidMove: false,
+    };
+  }
+
+  return {
+    board: updatedBoard,
+    currentPlayer: gameState.currentPlayer === "X" ? "O" : "X",
+    gameOver: false,
+    invalidMove: false,
+  };
 }
 
 export { createBoard, printBoard } from "./createBoard";
