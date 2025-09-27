@@ -1,47 +1,57 @@
-import * as readline from "readline";
 import { createBoard, printBoard } from "./createBoard";
 import { dropCoin } from "./dropCoin";
 import { checkWinner, isDraw } from "./checkWinner";
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-
-function ask(question: string): Promise<string> {
-  return new Promise((resolve) => rl.question(question, resolve));
+export interface GameState{
+  board: string[][];
+  currentPlayer: "X" | "O";
+  gameOver: boolean;
+  winner?: "X" | "O";
+  isDraw?: boolean;
+  invalidMove?: boolean;
 }
 
-async function playGame() {
-  let board = createBoard();
-  let currentPlayer = "X";
+export function makeMove(gameState: GameState, column: number): GameState{
+  
+  if (!gameState.gameOver){
+    const newBoard = dropCoin(gameState.board, column, gameState.currentPlayer);
+    if (!newBoard) return ({
+      board: gameState.board,
+      currentPlayer: gameState.currentPlayer,
+      gameOver: gameState.gameOver,
+      invalidMove: true
+    });
 
-  while (true) {
-    printBoard(board);
-    let col = parseInt(await ask(`Player ${currentPlayer}, choose a column (0-6): `));
+    if(isDraw(newBoard)) return ({
+      board: newBoard,
+      currentPlayer: gameState.currentPlayer,
+      gameOver: true,
+      isDraw: true
+    });
 
-    if (!dropCoin(board, col, currentPlayer)) {
-      console.log("Invalid move. Try again.");
-      continue;
-    }
+    if(checkWinner(newBoard, gameState.currentPlayer)) return ({
+      board: newBoard,
+      currentPlayer: gameState.currentPlayer,
+      gameOver: true,
+      winner: gameState.currentPlayer
+    })
+    
+    printBoard(newBoard);
 
-    if (checkWinner(board, currentPlayer)) {
-      printBoard(board);
-      console.log(`Player ${currentPlayer} wins!`);
-      break;
-    }
-
-    if (isDraw(board)) {
-      printBoard(board);
-      console.log("It's a draw!");
-      break;
-    }
-
-    currentPlayer = currentPlayer === "X" ? "O" : "X";
+    return({
+      board: newBoard,
+      currentPlayer: gameState.currentPlayer,
+      gameOver: false
+    }) 
+  } else {
+    return ({
+      board: gameState.board,
+      currentPlayer: gameState.currentPlayer,
+      gameOver: true
+    })
   }
-
-  rl.close();
 }
 
-playGame();
+export { createBoard, printBoard } from "./createBoard";
+export { dropCoin } from "./dropCoin";
+export { checkWinner, isDraw } from "./checkWinner";

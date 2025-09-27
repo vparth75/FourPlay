@@ -24,6 +24,9 @@ importers:
         specifier: ^8.18.3
         version: 8.18.3
     devDependencies:
+      '@repo/game':
+        specifier: workspace:*
+        version: link:../../packages/game
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
