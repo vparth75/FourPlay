@@ -12,6 +12,53 @@ const users = new Set<WebSocket>();
 const roomByPlayer = new Map<WebSocket, Room>();
 const queue: WebSocket[] = [];
 
+wss.on("connection", (socket: WebSocket) => {
+  users.add(socket);
+  queue.unshift(socket);
+
+  socket.send(
+    JSON.stringify({
+      type: "info",
+      message: "connected",
+    }),
+  );
+
+  socket.on("close", () => {
+    users.delete(socket);
+    roomByPlayer.delete(socket);
+  });
+
+  if (queue.length < 2) return;
+
+  const p1 = queue.pop();
+  const p2 = queue.pop();
+  if (!p1 || !p2) return;
+
+  const room: Room = {
+    players: [p1, p2],
+    gameState: {
+      board: createBoard(),
+      currentPlayer: "X",
+      gameOver: false,
+    },
+  };
+
+  room.players.forEach((player, index) => {
+    roomByPlayer.set(player, room);
+    const playerSymbol = index === 0 ? 'X' : 'O';
+    player.send(
+      JSON.stringify({
+        type: "start",
+        gameState: room.gameState,
+        playerSymbol: playerSymbol,
+      }),
+    );
+    player.on("message", message => handleMessage(player, message.toString()));
+  });
+
+  printBoard(room.gameState.board);
+});
+
 function handleMessage(sender: WebSocket, raw: string) {
   try {
     const room = roomByPlayer.get(sender);
@@ -51,48 +98,3 @@ function handleMessage(sender: WebSocket, raw: string) {
     );
   }
 }
-
-wss.on("connection", (socket: WebSocket) => {
-  users.add(socket);
-  queue.unshift(socket);
-
-  socket.send(
-    JSON.stringify({
-      type: "info",
-      message: "connected",
-    }),
-  );
-
-  socket.on("close", () => {
-    users.delete(socket);
-    roomByPlayer.delete(socket);
-  });
-
-  if (queue.length < 2) return;
-
-  const p1 = queue.pop();
-  const p2 = queue.pop();
-  if (!p1 || !p2) return;
-
-  const room: Room = {
-    players: [p1, p2],
-    gameState: {
-      board: createBoard(),
-      currentPlayer: "X",
-      gameOver: false,
-    },
-  };
-
-  room.players.forEach(player => {
-    roomByPlayer.set(player, room);
-    player.send(
-      JSON.stringify({
-        type: "start",
-        gameState: room.gameState,
-      }),
-    );
-    player.on("message", message => handleMessage(player, message.toString()));
-  });
-
-  printBoard(room.gameState.board);
-});
