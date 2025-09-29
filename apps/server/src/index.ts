@@ -1,100 +1,96 @@
-import { WebSocketServer, WebSocket } from "ws";
-import { makeMove, GameState, createBoard, printBoard } from "@repo/game";
+import express from 'express';
+import cors from 'cors';
+import jwt from 'jsonwebtoken';
+import { prismaClient } from '@repo/db/client';
+import { playerSchema } from './types';
+import bcrypt from 'bcrypt';
 
-const wss = new WebSocketServer({ port: 8080 });
+const app = express();
 
-interface Room {
-  players: WebSocket[];
-  gameState: GameState;
-}
+app.use(cors());
+app.use(express.json());
 
-const users = new Set<WebSocket>();
-const roomByPlayer = new Map<WebSocket, Room>();
-const queue: WebSocket[] = [];
+const JWT_SECRET = process.env.JWT_SECRET;
 
-wss.on("connection", (socket: WebSocket) => {
-  users.add(socket);
-  queue.unshift(socket);
-
-  socket.send(
-    JSON.stringify({
-      type: "info",
-      message: "connected",
-    }),
-  );
-
-  socket.on("close", () => {
-    users.delete(socket);
-    roomByPlayer.delete(socket);
-  });
-
-  if (queue.length < 2) return;
-
-  const p1 = queue.pop();
-  const p2 = queue.pop();
-  if (!p1 || !p2) return;
-
-  const room: Room = {
-    players: [p1, p2],
-    gameState: {
-      board: createBoard(),
-      currentPlayer: "X",
-      gameOver: false,
-    },
+app.post("/signup", async (req, res) =>  {
+  const parsedData = playerSchema.safeParse(req.body);
+  
+  if(!parsedData.success){
+    res.json({
+      message: "Incorrect inputs"
+    })
+    return;
   };
 
-  room.players.forEach((player, index) => {
-    roomByPlayer.set(player, room);
-    const playerSymbol = index === 0 ? 'X' : 'O';
-    player.send(
-      JSON.stringify({
-        type: "start",
-        gameState: room.gameState,
-        playerSymbol: playerSymbol,
-      }),
-    );
-    player.on("message", message => handleMessage(player, message.toString()));
-  });
+  try{
+    const hashedPassword = await bcrypt.hash(parsedData.data.password, 5);
 
-  printBoard(room.gameState.board);
-});
+    const user = await prismaClient.player.create({
+      data: {
+        username: parsedData.data.username,
+        password: hashedPassword
+      }
+    })
 
-function handleMessage(sender: WebSocket, raw: string) {
-  try {
-    const room = roomByPlayer.get(sender);
-    if (!room) return;
+    res.json({
+      message: "Signed up"
+    })
 
-    const parsedMessage = JSON.parse(raw);
-    if (parsedMessage.type !== "move") return;
-
-    const column = Number(parsedMessage.column);
-    const newState = makeMove(room.gameState, column);
-
-    if (!newState.invalidMove) {
-      room.gameState = newState;
-      printBoard(room.gameState.board);
-    }
-
-    if (newState.winner) {
-      printBoard(newState.board);
-      console.log(`${newState.currentPlayer} won!`)
-    }
-
-    room.players.forEach(player =>
-      player.send(
-        JSON.stringify({
-          type: "move",
-          column,
-          gameState: room.gameState,
-        }),
-      ),
-    );
-  } catch (error) {
-    sender.send(
-      JSON.stringify({
-        type: "info",
-        message: "Could not process message",
-      }),
-    );
+  } catch(e) {
+    console.log(`${e}`);
+    res.status(411).json({
+      message: "Failed to signup"
+    })
   }
-}
+})
+
+app.post("/signin", async(req, res) => {
+
+  const parsedData = playerSchema.safeParse(req.body)
+  if(!parsedData.success){
+    res.status(400).json({
+      message: "Invalid inputs"
+    });
+    return;
+  }
+  if(typeof parsedData.data.password != "string"){
+    return
+  }
+
+  try{
+    const user = await prismaClient.player.findFirst({
+      where: {
+        username: parsedData.data.username 
+      },
+      select: {
+        id: true,
+        password: true
+      }
+    })
+    if(!user){
+      res.status(401).json({ message: "Invalid credentials" });
+      return
+    }
+    
+    const comparePassword = await bcrypt.compare(parsedData.data.password, user.password)
+    
+    if(!comparePassword){
+      res.status(401).json({ message: "Invalid credentials" })
+    }
+
+    const userId = user.id
+    const token = jwt.sign({
+      userId
+    }, JWT_SECRET as string)
+
+    res.json({
+      token,
+      userId
+    })
+
+  } catch(e){
+    res.status(500).json({ message: "Internal server error" })
+  }
+})
+
+app.listen(3001);

@@ -1,12 +1,16 @@
 {
-  "name": "connect-4",
+  "name": "fourplay",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
+    "build": "dotenv -- turbo run build",
+    "dev": "dotenv -- turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "check-types": "turbo run check-types",
+    "db:generate": "dotenv -- turbo run db:generate",
+    "db:push": "dotenv -- turbo run db:push", 
+    "db:migrate": "dotenv -- turbo run db:migrate",
+    "db:studio": "dotenv -- turbo run db:studio"
   },
   "devDependencies": {
     "prettier": "^3.6.2",
@@ -16,5 +20,8 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv-cli": "^10.0.0"
   }
 }
