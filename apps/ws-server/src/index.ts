@@ -7,15 +7,27 @@ const wss = new WebSocketServer({ port: 8080 });
 
 interface Room {
   players: WebSocket[];
+  users: string[];
   gameState: GameState;
+}
+
+interface queuePlayer{
+  socket: WebSocket;
+  userId: string;
+  username: string | null | undefined;
 }
 
 const users = new Set<WebSocket>();
 const roomByPlayer = new Map<WebSocket, Room>();
-const queue: WebSocket[] = [];
+const queue: queuePlayer[] = [];
 const JWT_SECRET = process.env.JWT_SECRET;
 
-async function checkUser(token: string): Promise<string | null> {
+interface UserInfo {
+  userId: string;
+  username: string | null | undefined;
+}
+
+async function checkUser(token: string): Promise<UserInfo | null> {
   try {
     const decoded = jwt.verify(token, JWT_SECRET as string);
 
@@ -27,14 +39,27 @@ async function checkUser(token: string): Promise<string | null> {
       return null;
     }
 
+    // If username is in the JWT token, use it directly
+    if (decoded.username) {
+      return {
+        userId: decoded.userId,
+        username: decoded.username
+      };
+    }
+
+    // Fallback: get username from database
     const user = await prismaClient.player.findFirst({
       where: {
         id: decoded.userId
       }
     })
 
-    return decoded.userId;
+    return {
+      userId: decoded.userId,
+      username: user?.username
+    };
   } catch (e) {
+    console.log(`${e}`);
     return null;
   }
 }
@@ -45,15 +70,28 @@ wss.on("connection", async (socket: WebSocket, req) => {
 
   const queryParams = new URLSearchParams(url.split("?")[1]);
   const token = queryParams.get("token") || "";
-  const userId = await checkUser(token);
+  const userInfo = await checkUser(token);
   
-  if (!userId) {
+  if (!userInfo) {
+    socket.close();
+    return;
+  }
+  
+  const { userId, username } = userInfo;
+  
+  if(!userId || !username){
     socket.close();
     return;
   }
 
+  const player = {
+    socket,
+    userId,
+    username
+  }
+
   users.add(socket);
-  queue.unshift(socket);
+  queue.unshift(player);
 
   socket.send(
     JSON.stringify({
@@ -71,10 +109,13 @@ wss.on("connection", async (socket: WebSocket, req) => {
 
   const p1 = queue.pop();
   const p2 = queue.pop();
+
   if (!p1 || !p2) return;
+  if (!p1.username || !p2.username) return;
 
   const room: Room = {
-    players: [p1, p2],
+    players: [p1.socket, p2.socket],
+    users: [p1.username, p2.username],
     gameState: {
       board: createBoard(),
       currentPlayer: "X",
@@ -85,20 +126,23 @@ wss.on("connection", async (socket: WebSocket, req) => {
   room.players.forEach((player, index) => {
     roomByPlayer.set(player, room);
     const playerSymbol = index === 0 ? 'X' : 'O';
+    const opponentUsername = index === 0 ? `${p2.username}` : `${p1.username}`;
+    const userId = index === 0 ? `${p1.userId}` : `${p2.userId}`;
     player.send(
       JSON.stringify({
         type: "start",
+        opponentUsername,
         gameState: room.gameState,
         playerSymbol: playerSymbol,
       }),
     );
-    player.on("message", message => handleMessage(player, message.toString()));
+    player.on("message", message => handleMessage(player, message.toString(), userId));
   });
 
   printBoard(room.gameState.board);
 });
 
-function handleMessage(sender: WebSocket, raw: string) {
+async function handleMessage(sender: WebSocket, raw: string, userId: string) {
   try {
     const room = roomByPlayer.get(sender);
     if (!room) return;
@@ -115,6 +159,16 @@ function handleMessage(sender: WebSocket, raw: string) {
     }
 
     if (newState.winner) {
+      const addPoints = await prismaClient.player.update({
+        where: {
+          id: userId
+        },
+        data: {
+          points: {
+            increment: 10
+          }
+        }
+      })
       printBoard(newState.board);
       console.log(`${newState.currentPlayer} won!`)
     }

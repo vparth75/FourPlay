@@ -64,6 +64,7 @@ app.post("/signin", async(req, res) => {
       },
       select: {
         id: true,
+        username: true,
         password: true
       }
     })
@@ -76,21 +77,49 @@ app.post("/signin", async(req, res) => {
     
     if(!comparePassword){
       res.status(401).json({ message: "Invalid credentials" })
+      return
     }
 
     const userId = user.id
     const token = jwt.sign({
-      userId
+      userId,
+      username: user.username
     }, JWT_SECRET as string)
 
     res.json({
       token,
-      userId
+      userId,
+      username: user.username
     })
 
   } catch(e){
     res.status(500).json({ message: "Internal server error" })
   }
+})
+
+app.get("/leaderBoard", async (req, res) => {
+  try{
+    const leaderBoard = await prismaClient.player.findMany({
+      select: {
+        id: true,
+        username: true,
+        points: true
+      },
+      orderBy: {
+        points: "desc",
+      }
+    });
+
+    res.json({
+      leaderBoard
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      message: "Error fetching leader board"
+    })
+  }
+  
 })
 
 app.listen(3001);

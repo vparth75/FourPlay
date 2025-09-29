@@ -11,13 +11,13 @@ export default function LandingPage() {
           </h1>
           <div className="space-x-4">
             <Link 
-              href="/auth/login"
+              href="/signin"
               className="px-4 py-2 border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg transition-colors duration-200"
             >
-              Login
+              Sign In
             </Link>
             <Link
-              href="/auth/signup"
+              href="/signup"
               className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg font-semibold transition-all duration-200"
             >
               Sign Up

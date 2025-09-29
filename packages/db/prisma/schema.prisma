@@ -17,5 +17,5 @@ model Player {
   id          String     @id @default(uuid())
   username    String     @unique
   password    String
-  ranking     Int        @default(0)
+  points      Int        @default(0)
 }

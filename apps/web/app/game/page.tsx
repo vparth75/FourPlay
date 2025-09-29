@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import UserDropdown from '../../components/UserDropdown';
 
 type GameState = {
   board: string[][];
@@ -15,6 +16,8 @@ type GameState = {
 export default function GamePage() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [playerSymbol, setPlayerSymbol] = useState<"X" | "O" | null>(null);
+  const [opponentUsername, setOpponentUsername] = useState<string>('');
+  const [currentUsername, setCurrentUsername] = useState<string>('');
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const router = useRouter();
@@ -22,6 +25,13 @@ export default function GamePage() {
   useEffect(() => {
     const savedGameState = sessionStorage.getItem('gameState');
     const savedPlayerSymbol = sessionStorage.getItem('playerSymbol');
+    const savedOpponentUsername = sessionStorage.getItem('opponentUsername');
+
+    // Get current user's username
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      setCurrentUsername(storedUsername);
+    }
 
     if (!savedGameState || !savedPlayerSymbol) {
       router.replace('/home');
@@ -30,6 +40,10 @@ export default function GamePage() {
 
     setGameState(JSON.parse(savedGameState));
     setPlayerSymbol(savedPlayerSymbol as "X" | "O");
+    
+    if (savedOpponentUsername) {
+      setOpponentUsername(savedOpponentUsername);
+    }
 
     const ws = (window as any).gameWebSocket;
 
@@ -45,6 +59,10 @@ export default function GamePage() {
             case 'start':
               sessionStorage.setItem('gameState', JSON.stringify(message.gameState));
               sessionStorage.setItem('playerSymbol', message.playerSymbol);
+              if (message.opponentUsername) {
+                sessionStorage.setItem('opponentUsername', message.opponentUsername);
+                setOpponentUsername(message.opponentUsername);
+              }
               setGameState(message.gameState);
               setPlayerSymbol(message.playerSymbol);
               break;
@@ -93,8 +111,28 @@ export default function GamePage() {
     
     sessionStorage.removeItem('gameState');
     sessionStorage.removeItem('playerSymbol');
+    sessionStorage.removeItem('opponentUsername');
     
     router.replace('/home');
+  };
+
+  const handleLogout = () => {
+    // Clear WebSocket connection
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    
+    // Clear local storage
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    
+    // Clear session storage
+    sessionStorage.removeItem('gameState');
+    sessionStorage.removeItem('playerSymbol');
+    sessionStorage.removeItem('opponentUsername');
+    
+    router.replace('/');
   };
 
   const playAgain = () => {
@@ -104,6 +142,7 @@ export default function GamePage() {
     
     sessionStorage.removeItem('gameState');
     sessionStorage.removeItem('playerSymbol');
+    sessionStorage.removeItem('opponentUsername');
     
     router.replace('/home');
   };
@@ -156,11 +195,18 @@ export default function GamePage() {
             FourPlay
           </Link>
           <div className="flex items-center space-x-4">
+            <Link 
+              href="/leaderboard"
+              className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors duration-200 font-semibold text-sm"
+            >
+              🏆
+            </Link>
             <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
               isConnected ? 'bg-green-600' : 'bg-red-600'
             }`}>
               {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
             </div>
+            <UserDropdown onLogout={handleLogout} />
             <button
               onClick={leaveGame}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200 font-semibold"
@@ -178,21 +224,45 @@ export default function GamePage() {
 
         <div className="text-center mb-8">
           <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 max-w-2xl mx-auto">
-            <div className="flex items-center justify-center space-x-6 mb-4">
-              <div className="text-lg">
-                <span className="text-gray-400">You are:</span>
-                <span className={`ml-2 px-3 py-1 rounded font-bold text-lg ${
-                  playerSymbol === 'X' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-black'
-                }`}>
-                  {playerSymbol} {playerSymbol === 'X' ? '(Red)' : '(Yellow)'}
-                </span>
+            {/* Player Names */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="text-center">
+                <p className="text-gray-400 text-sm mb-1">You</p>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg ${
+                    playerSymbol === 'X' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-black'
+                  }`}>
+                    {playerSymbol}
+                  </div>
+                  <span className="font-semibold">{currentUsername || 'You'}</span>
+                </div>
               </div>
+              
+              <div className="text-2xl">VS</div>
+              
+              <div className="text-center">
+                <p className="text-gray-400 text-sm mb-1">Opponent</p>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg ${
+                    playerSymbol === 'X' ? 'bg-yellow-500 text-black' : 'bg-red-500 text-white'
+                  }`}>
+                    {playerSymbol === 'X' ? 'O' : 'X'}
+                  </div>
+                  <span className="font-semibold">{opponentUsername || 'Opponent'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center space-x-6 mb-4">
               <div className="text-lg">
                 <span className="text-gray-400">Current turn:</span>
                 <span className={`ml-2 px-3 py-1 rounded font-bold text-lg ${
                   gameState.currentPlayer === 'X' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-black'
                 }`}>
-                  {gameState.currentPlayer} {gameState.currentPlayer === 'X' ? '(Red)' : '(Yellow)'}
+                  {gameState.currentPlayer === playerSymbol ? 
+                    (currentUsername || 'You') : 
+                    (opponentUsername || 'Opponent')
+                  }
                 </span>
               </div>
             </div>
@@ -205,7 +275,7 @@ export default function GamePage() {
                   </p>
                 ) : (
                   <p className="text-orange-400 font-semibold text-lg">
-                    ⏳ Waiting for opponent's move...
+                    ⏳ Waiting for {opponentUsername || 'opponent'}'s move...
                   </p>
                 )}
               </>
