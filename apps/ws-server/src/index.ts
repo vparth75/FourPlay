@@ -248,7 +248,7 @@ function handleBotMove(room: Room) {
     
     if (!newState.invalidMove) {
       room.gameState = newState;
-      printBoard(room.gameState.board);
+      // printBoard(room.gameState.board);
       
       room.players[0]!.send(
         JSON.stringify({
@@ -327,7 +327,7 @@ wss.on("connection", async (socket: WebSocket, req) => {
       
 
       const botRoom = createBotRoom(player!);
-      printBoard(botRoom.gameState.board);
+      // printBoard(botRoom.gameState.board);
       
       console.log(`Player ${username} matched with bot after timeout`);
     }
@@ -400,7 +400,7 @@ wss.on("connection", async (socket: WebSocket, req) => {
     player.on("message", message => handleMessage(player, message.toString(), userId));
   });
 
-  printBoard(room.gameState.board);
+  // printBoard(room.gameState.board);
 });
 
 async function handleMessage(sender: WebSocket, raw: string, userId: string) {
@@ -416,7 +416,7 @@ async function handleMessage(sender: WebSocket, raw: string, userId: string) {
 
     if (!newState.invalidMove) {
       room.gameState = newState;
-      printBoard(room.gameState.board);
+      // printBoard(room.gameState.board);
     }
 
     if (newState.winner) {
@@ -430,7 +430,7 @@ async function handleMessage(sender: WebSocket, raw: string, userId: string) {
           }
         }
       })
-      printBoard(newState.board);
+      // printBoard(newState.board);
       console.log(`${newState.currentPlayer} won!`)
     }
 
