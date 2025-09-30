@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '../../components/AuthGuard';
@@ -8,10 +8,23 @@ import UserDropdown from '../../components/UserDropdown';
 
 type ConnectionState = 'disconnected' | 'searching' | 'connected';
 
+const MATCHMAKING_TIMEOUT_SECONDS = 10;
+
 export default function HomePage() {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+  const [countdown, setCountdown] = useState<number>(MATCHMAKING_TIMEOUT_SECONDS);
   const wsRef = useRef<WebSocket | null>(null);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+
+  // Cleanup effect for countdown timer
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+    };
+  }, []);
 
   const connectToServer = () => {
     if (connectionState !== 'disconnected') return;
@@ -24,7 +37,20 @@ export default function HomePage() {
       return;
     }
     
-    setConnectionState('searching');
+  setConnectionState('searching');
+  setCountdown(MATCHMAKING_TIMEOUT_SECONDS);
+    
+    // Start countdown timer
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    countdownRef.current = timer;
     
     // Include token as query parameter
     const ws = new WebSocket(`ws://localhost:8080?token=${token}`);
@@ -75,11 +101,19 @@ export default function HomePage() {
     ws.onclose = (event) => {
       console.log('WebSocket closed:', event.code, event.reason);
       setConnectionState('disconnected');
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       setConnectionState('disconnected');
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
     };
 
     if (typeof window !== 'undefined') {
@@ -91,13 +125,24 @@ export default function HomePage() {
     if (wsRef.current) {
       wsRef.current.close();
     }
-    setConnectionState('disconnected');
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+  setConnectionState('disconnected');
+  setCountdown(MATCHMAKING_TIMEOUT_SECONDS);
   };
 
   const handleLogout = () => {
     // Clear WebSocket connection
     if (wsRef.current) {
       wsRef.current.close();
+    }
+    
+    // Clear countdown timer
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
     }
     
     // Clear local storage
@@ -151,13 +196,13 @@ export default function HomePage() {
                   <div className="text-4xl mb-4">🎮</div>
                   <h2 className="text-2xl font-semibold mb-4">Find Your Opponent</h2>
                   <p className="text-gray-400 mb-6">
-                    Click the button below to join the matchmaking queue and get paired with another player instantly.
+                    Join the matchmaking queue to get paired with another player. If no human opponent is found within 10 seconds, you'll be matched with a bot!
                   </p>
                   <button
                     onClick={connectToServer}
                     className="w-full px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
                   >
-                    🔍 Find Player
+                    🔍 Find Opponent
                   </button>
                 </div>
               </div>
@@ -170,9 +215,31 @@ export default function HomePage() {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                     <p className="text-xl text-blue-400">Searching for opponent...</p>
                   </div>
-                  <p className="text-gray-400 mb-6">
-                    Looking for another player to challenge. This usually takes just a few seconds!
-                  </p>
+                  
+                  <div className="mb-6">
+                    <div className="flex items-center justify-center space-x-2 mb-4">
+                      <div className="text-3xl font-bold text-yellow-400">{countdown}</div>
+                      <div className="text-gray-400">seconds remaining</div>
+                    </div>
+                    
+                    <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-yellow-500 h-2 rounded-full transition-all duration-1000"
+                        style={{ width: `${(countdown / MATCHMAKING_TIMEOUT_SECONDS) * 100}%` }}
+                      ></div>
+                    </div>
+                    
+                    {countdown > MATCHMAKING_TIMEOUT_SECONDS / 2 ? (
+                      <p className="text-gray-400 text-center">
+                        Looking for another player to challenge...
+                      </p>
+                    ) : (
+                      <p className="text-yellow-400 text-center font-semibold">
+                        🤖 No players found! You'll be matched with a bot soon...
+                      </p>
+                    )}
+                  </div>
+                  
                   <button
                     onClick={disconnect}
                     className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200 font-semibold"

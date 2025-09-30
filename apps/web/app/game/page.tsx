@@ -19,6 +19,8 @@ export default function GamePage() {
   const [opponentUsername, setOpponentUsername] = useState<string>('');
   const [currentUsername, setCurrentUsername] = useState<string>('');
   const [isConnected, setIsConnected] = useState(false);
+  const [isBot, setIsBot] = useState(false);
+  const [botThinking, setBotThinking] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const router = useRouter();
 
@@ -43,6 +45,8 @@ export default function GamePage() {
     
     if (savedOpponentUsername) {
       setOpponentUsername(savedOpponentUsername);
+      // Check if opponent is a bot
+      setIsBot(savedOpponentUsername === 'Bot');
     }
 
     const ws = (window as any).gameWebSocket;
@@ -62,6 +66,7 @@ export default function GamePage() {
               if (message.opponentUsername) {
                 sessionStorage.setItem('opponentUsername', message.opponentUsername);
                 setOpponentUsername(message.opponentUsername);
+                setIsBot(message.opponentUsername === 'Bot');
               }
               setGameState(message.gameState);
               setPlayerSymbol(message.playerSymbol);
@@ -69,6 +74,10 @@ export default function GamePage() {
               
             case 'move':
               setGameState(message.gameState);
+              // If it's a bot game and the move is from the bot, show thinking is done
+              if (isBot && message.gameState.currentPlayer === playerSymbol) {
+                setBotThinking(false);
+              }
               break;
               
             default:
@@ -102,6 +111,11 @@ export default function GamePage() {
       type: 'move',
       column: column
     }));
+
+    // If playing against bot and it's now bot's turn, show thinking indicator
+    if (isBot && gameState.currentPlayer === playerSymbol) {
+      setBotThinking(true);
+    }
   };
 
   const leaveGame = () => {
@@ -248,7 +262,10 @@ export default function GamePage() {
                   }`}>
                     {playerSymbol === 'X' ? 'O' : 'X'}
                   </div>
-                  <span className="font-semibold">{opponentUsername || 'Opponent'}</span>
+                  <span className="font-semibold flex items-center space-x-1">
+                    {isBot && <span className="text-lg">🤖</span>}
+                    <span>{opponentUsername || 'Opponent'}</span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -275,7 +292,14 @@ export default function GamePage() {
                   </p>
                 ) : (
                   <p className="text-orange-400 font-semibold text-lg">
-                    ⏳ Waiting for {opponentUsername || 'opponent'}'s move...
+                    {isBot && botThinking ? (
+                      <span className="flex items-center justify-center space-x-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-400"></div>
+                        <span>🤖 Bot is thinking...</span>
+                      </span>
+                    ) : (
+                      <>⏳ Waiting for {opponentUsername || 'opponent'}'s move...</>
+                    )}
                   </p>
                 )}
               </>
