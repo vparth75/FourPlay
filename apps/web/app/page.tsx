@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import AuthAwareButton from '../components/AuthAwareButton';
+import { Gamepad2, BookOpen, Target, Rocket, Globe, Zap } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -36,17 +38,16 @@ export default function LandingPage() {
             The classic strategy game reimagined for the modern web. Play real-time matches against opponents from around the world!
           </p>
           <div className="space-x-4">
-            <Link
-              href="/auth/signup"
-              className="inline-block px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
-            >
-              🎮 Start Playing
-            </Link>
+            <AuthAwareButton>
+              <Gamepad2 className="w-5 h-5 inline mr-2" />
+              Start Playing
+            </AuthAwareButton>
             <Link
               href="#how-to-play"
               className="inline-block px-8 py-4 border-2 border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white rounded-lg font-semibold text-lg transition-all duration-200"
             >
-              📚 How to Play
+              <BookOpen className="w-5 h-5 inline mr-2" />
+              How to Play
             </Link>
           </div>
         </div>
@@ -54,21 +55,27 @@ export default function LandingPage() {
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-            <div className="text-4xl mb-4">⚡</div>
+            <div className="text-4xl mb-4 flex justify-center">
+              <Zap className="w-10 h-10 text-yellow-400" />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Real-Time Gameplay</h3>
             <p className="text-gray-400">
               Experience lightning-fast, real-time matches with WebSocket technology. Every move happens instantly!
             </p>
           </div>
           <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-            <div className="text-4xl mb-4">🌐</div>
+            <div className="text-4xl mb-4 flex justify-center">
+              <Globe className="w-10 h-10 text-purple-400" />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Global Matchmaking</h3>
             <p className="text-gray-400">
               Get matched with players from around the world. Find opponents instantly and start playing!
             </p>
           </div>
           <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
-            <div className="text-4xl mb-4">🎯</div>
+            <div className="text-4xl mb-4 flex justify-center">
+              <Target className="w-10 h-10 text-blue-400" />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Classic Strategy</h3>
             <p className="text-gray-400">
               The timeless 4-in-a-row gameplay you know and love, with smooth animations and responsive design.
@@ -148,12 +155,10 @@ export default function LandingPage() {
           <p className="text-xl text-gray-300 mb-8">
             Join thousands of players in epic Connect Four battles!
           </p>
-          <Link
-            href="/auth/signup"
-            className="inline-block px-10 py-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 rounded-lg font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
-          >
-            🚀 Get Started Now
-          </Link>
+          <AuthAwareButton className="inline-block px-10 py-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 rounded-lg font-bold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+            <Rocket className="w-5 h-5 inline mr-2" />
+            Get Started Now
+          </AuthAwareButton>
         </div>
       </main>
 

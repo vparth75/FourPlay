@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import UserDropdown from '../../components/UserDropdown';
+import { Trophy, Target, Handshake, Wifi, WifiOff, Bot, PartyPopper, Frown } from 'lucide-react';
 
 type GameState = {
   board: string[][];
@@ -213,12 +214,22 @@ export default function GamePage() {
               href="/leaderboard"
               className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors duration-200 font-semibold text-sm"
             >
-              🏆
+              <Trophy className="w-4 h-4" />
             </Link>
-            <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+            <div className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2 ${
               isConnected ? 'bg-green-600' : 'bg-red-600'
             }`}>
-              {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+              {isConnected ? (
+                <>
+                  <Wifi className="w-4 h-4" />
+                  Connected
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-4 h-4" />
+                  Disconnected
+                </>
+              )}
             </div>
             <UserDropdown onLogout={handleLogout} />
             <button
@@ -263,7 +274,7 @@ export default function GamePage() {
                     {playerSymbol === 'X' ? 'O' : 'X'}
                   </div>
                   <span className="font-semibold flex items-center space-x-1">
-                    {isBot && <span className="text-lg">🤖</span>}
+                    {isBot && <Bot className="w-5 h-5 text-blue-400" />}
                     <span>{opponentUsername || 'Opponent'}</span>
                   </span>
                 </div>
@@ -287,15 +298,17 @@ export default function GamePage() {
             {!gameState.gameOver && isConnected && (
               <>
                 {gameState.currentPlayer === playerSymbol ? (
-                  <p className="text-green-400 font-semibold text-lg">
-                    🎯 Your turn! Click a column to drop your piece.
+                  <p className="text-green-400 font-semibold text-lg flex items-center justify-center gap-2">
+                    <Target className="w-5 h-5" />
+                    Your turn! Click a column to drop your piece.
                   </p>
                 ) : (
                   <p className="text-orange-400 font-semibold text-lg">
                     {isBot && botThinking ? (
                       <span className="flex items-center justify-center space-x-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-400"></div>
-                        <span>🤖 Bot is thinking...</span>
+                        <Bot className="w-4 h-4" />
+                        <span>Bot is thinking...</span>
                       </span>
                     ) : (
                       <>⏳ Waiting for {opponentUsername || 'opponent'}'s move...</>
@@ -315,11 +328,24 @@ export default function GamePage() {
               <div className="space-y-4">
                 <div className="text-3xl font-bold">
                   {gameState.winner ? (
-                    <p className={gameState.winner === playerSymbol ? 'text-green-400' : 'text-red-400'}>
-                      {gameState.winner === playerSymbol ? '🎉 You Win!' : '😔 You Lose!'}
+                    <p className={`flex items-center justify-center gap-2 ${gameState.winner === playerSymbol ? 'text-green-400' : 'text-red-400'}`}>
+                      {gameState.winner === playerSymbol ? (
+                        <>
+                          <PartyPopper className="w-8 h-8" />
+                          You Win!
+                        </>
+                      ) : (
+                        <>
+                          <Frown className="w-8 h-8" />
+                          You Lose!
+                        </>
+                      )}
                     </p>
                   ) : (
-                    <p className="text-yellow-400">🤝 It's a Draw!</p>
+                    <p className="text-yellow-400 flex items-center justify-center gap-2">
+                      <Handshake className="w-8 h-8" />
+                      It's a Draw!
+                    </p>
                   )}
                 </div>
                 <div className="flex justify-center space-x-4">

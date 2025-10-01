@@ -5,6 +5,7 @@ import Link from 'next/link';
 import AuthGuard from '../../components/AuthGuard';
 import UserDropdown from '../../components/UserDropdown';
 import { useRouter } from 'next/navigation';
+import { Trophy, Gamepad2, Home } from 'lucide-react';
 
 interface Player {
   id: string;
@@ -91,9 +92,10 @@ export default function LeaderboardPage() {
             <div className="flex items-center space-x-4">
               <Link 
                 href="/home"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 font-semibold"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 font-semibold flex items-center gap-2"
               >
-                🏠 Home
+                <Home className="w-4 h-4" />
+                Home
               </Link>
               <UserDropdown onLogout={handleLogout} />
             </div>
@@ -102,8 +104,9 @@ export default function LeaderboardPage() {
 
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-              🏆 Leaderboard
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent flex items-center justify-center gap-3">
+              <Trophy className="w-12 h-12 text-yellow-400" />
+              Leaderboard
             </h1>
             <p className="text-xl text-gray-300">
               Top players ranked by their total points
@@ -127,7 +130,9 @@ export default function LeaderboardPage() {
             <div className="space-y-4">
               {players.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🎮</div>
+                  <div className="flex justify-center mb-4">
+                    <Gamepad2 className="w-16 h-16 text-blue-400" />
+                  </div>
                   <h2 className="text-2xl font-semibold mb-2 text-gray-300">No players yet!</h2>
                   <p className="text-gray-400">Be the first to start playing and earn points.</p>
                 </div>
@@ -195,32 +200,12 @@ export default function LeaderboardPage() {
 
               {/* Actions */}
               <div className="text-center mt-12 space-y-4">
-                <div className="bg-slate-800/30 p-6 rounded-xl border border-slate-700 max-w-2xl mx-auto">
-                  <h3 className="text-xl font-semibold mb-4">🎯 How to Earn Points</h3>
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <div className="space-y-2">
-                      <div className="text-2xl">🏆</div>
-                      <p className="text-green-400 font-semibold">Win a Game</p>
-                      <p className="text-gray-400">+10 points</p>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-2xl">🤝</div>
-                      <p className="text-blue-400 font-semibold">Draw Game</p>
-                      <p className="text-gray-400">+3 points</p>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-2xl">🎮</div>
-                      <p className="text-purple-400 font-semibold">Play Game</p>
-                      <p className="text-gray-400">+1 point</p>
-                    </div>
-                  </div>
-                </div>
-                
                 <Link
                   href="/home"
                   className="inline-block px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
                 >
-                  🎮 Play Now & Earn Points
+                  <Gamepad2 className="w-5 h-5 inline mr-2" />
+                  Play Now & Earn Points
                 </Link>
               </div>
             </div>

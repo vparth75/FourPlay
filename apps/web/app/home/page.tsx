@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '../../components/AuthGuard';
 import UserDropdown from '../../components/UserDropdown';
+import { Trophy, Gamepad2, Target, Search, Bot } from 'lucide-react';
 
 type ConnectionState = 'disconnected' | 'searching' | 'connected';
 
@@ -171,7 +172,7 @@ export default function HomePage() {
                 href="/leaderboard"
                 className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors duration-200 font-semibold flex items-center space-x-2"
               >
-                <span>🏆</span>
+                <Trophy className="w-4 h-4" />
                 <span>Leaderboard</span>
               </Link>
               <UserDropdown onLogout={handleLogout} />
@@ -193,7 +194,9 @@ export default function HomePage() {
             {connectionState === 'disconnected' && (
               <div className="space-y-6">
                 <div className="bg-slate-800/50 p-8 rounded-xl border border-slate-700 max-w-md mx-auto">
-                  <div className="text-4xl mb-4">🎮</div>
+                  <div className="flex justify-center mb-4">
+                    <Gamepad2 className="w-10 h-10 text-blue-400" />
+                  </div>
                   <h2 className="text-2xl font-semibold mb-4">Find Your Opponent</h2>
                   <p className="text-gray-400 mb-6">
                     Join the matchmaking queue to get paired with another player. If no human opponent is found within 10 seconds, you'll be matched with a bot!
@@ -202,7 +205,8 @@ export default function HomePage() {
                     onClick={connectToServer}
                     className="w-full px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
                   >
-                    🔍 Find Opponent
+                    <Search className="w-5 h-5 inline mr-2" />
+                    Find Opponent
                   </button>
                 </div>
               </div>
@@ -234,8 +238,9 @@ export default function HomePage() {
                         Looking for another player to challenge...
                       </p>
                     ) : (
-                      <p className="text-yellow-400 text-center font-semibold">
-                        🤖 No players found! You'll be matched with a bot soon...
+                      <p className="text-yellow-400 text-center font-semibold flex items-center justify-center gap-2">
+                        <Bot className="w-5 h-5" />
+                        No players found! You'll be matched with a bot soon...
                       </p>
                     )}
                   </div>
@@ -253,7 +258,10 @@ export default function HomePage() {
 
           {/* Game Rules Reminder */}
           <div className="bg-slate-800/30 p-6 rounded-xl border border-slate-700 max-w-2xl mx-auto">
-            <h3 className="text-xl font-semibold mb-4">🎯 Quick Rules Reminder</h3>
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Target className="w-5 h-5 text-blue-400" />
+              Quick Rules Reminder
+            </h3>
             <div className="grid md:grid-cols-2 gap-4 text-left">
               <div className="space-y-2">
                 <p className="text-gray-300"><span className="text-red-400 font-semibold">Red (X)</span> goes first</p>
