@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    container_name: fourplay-api
+    command: ["node", "apps/server/dist/index.js"]
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  ws:
+    build:
+      context: .
+      target: runtime
+    container_name: fourplay-ws
+    command: ["node", "apps/ws-server/dist/index.js"]
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      target: runtime
+    container_name: fourplay-web
+    command: ["pnpm", "--filter", "web", "start"]
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_API_URL: "http://localhost:3001"
+      NEXT_PUBLIC_WS_URL: "ws://localhost:8080"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - ws
+    restart: unless-stopped

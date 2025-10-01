@@ -1,0 +1,10 @@
+node_modules
+.pnpm-store
+.turbo
+.vscode
+.git
+Dockerfile*
+docker-compose*.yml
+apps/server/dist
+apps/ws-server/dist
+apps/web/.next
