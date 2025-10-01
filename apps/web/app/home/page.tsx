@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AuthGuard from '../../components/AuthGuard';
 import UserDropdown from '../../components/UserDropdown';
 import { Trophy, Gamepad2, Target, Search, Bot } from 'lucide-react';
+import { getWsBase } from '../../lib/config';
 
 type ConnectionState = 'disconnected' | 'searching' | 'connected';
 
@@ -53,8 +54,8 @@ export default function HomePage() {
     }, 1000);
     countdownRef.current = timer;
     
-    // Include token as query parameter
-    const ws = new WebSocket(`ws://localhost:8080?token=${token}`);
+  // Include token as query parameter
+  const ws = new WebSocket(`${getWsBase()}?token=${token}`);
     wsRef.current = ws;
 
     ws.onopen = () => {

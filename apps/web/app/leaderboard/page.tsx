@@ -6,6 +6,7 @@ import AuthGuard from '../../components/AuthGuard';
 import UserDropdown from '../../components/UserDropdown';
 import { useRouter } from 'next/navigation';
 import { Trophy, Gamepad2, Home } from 'lucide-react';
+import { API_BASE } from '../../lib/config';
 
 interface Player {
   id: string;
@@ -25,7 +26,7 @@ export default function LeaderboardPage() {
 
   const fetchLeaderboard = async () => {
     try {
-      const response = await fetch('http://localhost:3001/leaderBoard');
+      const response = await fetch(`${API_BASE}/leaderBoard`);
       const data = await response.json();
 
       if (response.ok) {

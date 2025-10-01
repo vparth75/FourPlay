@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE } from '../../lib/config';
 
 interface SignupFormData {
   username: string;
@@ -22,7 +23,7 @@ export default function SignupPage() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3001/signup', {
+      const response = await fetch(`${API_BASE}/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

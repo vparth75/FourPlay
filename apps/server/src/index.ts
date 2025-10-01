@@ -7,10 +7,26 @@ import bcrypt from 'bcrypt';
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://fourplay.0xparth.me',
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // Non-browser or same-origin
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const PORT = Number(process.env.PORT || 3001);
+
+app.get('/health', (_req, res) => {
+  res.status(200).send('ok');
+});
 
 app.post("/signup", async (req, res) =>  {
   const parsedData = playerSchema.safeParse(req.body);
@@ -122,4 +138,6 @@ app.get("/leaderBoard", async (req, res) => {
   
 })
 
-app.listen(3001);
+app.listen(PORT, () => {
+  console.log(`API listening on :${PORT}`);
+});

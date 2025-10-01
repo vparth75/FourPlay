@@ -3,7 +3,13 @@ import { makeMove, GameState, createBoard, printBoard, dropCoin, checkWinner } f
 import jwt from 'jsonwebtoken';
 import { prismaClient } from '@repo/db/client';
 
-const wss = new WebSocketServer({ port: 8080 });
+const PORT = Number(process.env.PORT || 8080);
+const allowedOrigins = new Set<string>([
+  'http://localhost:3000',
+  'https://fourplay.0xparth.me',
+]);
+
+const wss = new WebSocketServer({ port: PORT });
 
 interface Room {
   players: WebSocket[];
@@ -300,6 +306,11 @@ async function checkUser(token: string): Promise<UserInfo | null> {
 }
 
 wss.on("connection", async (socket: WebSocket, req) => {
+  const origin = req.headers.origin as string | undefined;
+  if (origin && !allowedOrigins.has(origin)) {
+    socket.close(1008, 'Invalid origin');
+    return;
+  }
   const url = req.url;
   if(!url) return;
 
